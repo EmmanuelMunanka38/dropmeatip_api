@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/images/Drop%20Me%20a%20Tip%20Script%20Logo.png" alt="Drop Me a Tip Logo" width="800" />
+</p>
+
 # dropmeatip_api
 
 Production-grade monolithic REST API for a Tanzanian creator donation and membership platform (a Buy Me a Coffee clone). Supports passwordless OTP authentication, creator profiles and membership tiers, mobile-money donations, and a double-entry wallet with payouts.
