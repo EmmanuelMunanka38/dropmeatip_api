@@ -1,0 +1,179 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TransactionType {
+  DONATION
+  MEMBERSHIP
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum LedgerType {
+  CREDIT
+  DEBIT
+  FEE
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum MembershipStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  fullName     String
+  phone        String   @unique
+  username     String   @unique
+  isVerified   Boolean  @default(false)
+  bio          String?
+  avatarUrl    String?
+  unitName     String   @default("Soda")
+  unitPriceTzs Int      @default(2000)
+  payoutPhone  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  wallet       Wallet?
+  tiers        MembershipTier[]
+  memberships  UserMembership[]
+  transactions Transaction[]
+  payouts      Payout[]
+
+  @@index([username])
+}
+
+model Otp {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  code      String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
+model MembershipTier {
+  id          String   @id @default(uuid())
+  creatorId   String
+  creator     User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  title       String
+  priceTzs    Int
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  memberships  UserMembership[]
+  transactions Transaction[]
+
+  @@index([creatorId])
+}
+
+model UserMembership {
+  id             String           @id @default(uuid())
+  creatorId      String
+  creator        User             @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  tierId         String
+  tier           MembershipTier   @relation(fields: [tierId], references: [id], onDelete: Cascade)
+  supporterName  String
+  supporterPhone String
+  status         MembershipStatus @default(ACTIVE)
+  startDate      DateTime         @default(now())
+  endDate        DateTime?
+  transactionId  String?          @unique
+  transaction    Transaction?     @relation(fields: [transactionId], references: [id])
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([creatorId])
+  @@index([tierId])
+}
+
+model Transaction {
+  id            String            @id @default(uuid())
+  reference     String            @unique
+  type          TransactionType
+  amountTzs     Int
+  feeTzs        Int               @default(0)
+  netAmountTzs  Int               @default(0)
+  phone         String
+  message       String?
+  supporterName String
+  status        TransactionStatus @default(PENDING)
+  creatorId     String
+  creator       User              @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  tierId        String?
+  tier          MembershipTier?   @relation(fields: [tierId], references: [id])
+  membership    UserMembership?
+  ledgerEntries WalletLedger[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([creatorId])
+  @@index([status])
+  @@index([reference])
+}
+
+model Wallet {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ledgerEntries WalletLedger[]
+}
+
+model WalletLedger {
+  id            String       @id @default(uuid())
+  walletId      String
+  wallet        Wallet       @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  type          LedgerType
+  amountTzs     Int
+  description   String?
+  reference     String?
+  transactionId String?
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+  payoutId      String?
+  payout        Payout?      @relation(fields: [payoutId], references: [id])
+  createdAt     DateTime     @default(now())
+
+  @@index([walletId])
+  @@index([transactionId])
+}
+
+model Payout {
+  id        String       @id @default(uuid())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amountTzs Int
+  phone     String
+  status    PayoutStatus @default(PENDING)
+  reference String       @unique
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  ledgerEntries WalletLedger[]
+
+  @@index([userId])
+}
