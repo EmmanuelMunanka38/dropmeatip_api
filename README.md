@@ -54,43 +54,6 @@ wallet ledger for accurate, auditable balances.
 | Authentication | JWT (access + refresh)              |
 | Email          | Resend                              |
 
-## Project Structure
-
-```
-.
-├── prisma/
-│   ├── schema.prisma          # User, Otp, MembershipTier, UserMembership,
-│   │                          # Transaction, Wallet, WalletLedger, Payout
-│   └── migrations/
-├── public/                    # Static assets (images served at /images/*)
-├── src/
-│   ├── config/                # env.ts (Zod), db.ts (Prisma singleton)
-│   ├── middleware/            # auth, validate, error
-│   ├── utils/                 # jwt, phone, api-response, http-error
-│   ├── services/              # email.service, otp.service
-│   ├── email-templates/       # welcome, otp, donation, payout
-│   ├── types/                 # shared types + Express augmentation
-│   ├── modules/
-│   │   ├── auth/              # register, login, verify-otp, refresh, me
-│   │   ├── creators/          # profile, tiers
-│   │   ├── payments/          # initiate, webhook, transaction status
-│   │   └── wallet/            # balance, ledger, withdraw
-│   ├── app.ts                 # Express app + middleware wiring
-│   └── server.ts              # entrypoint (port + graceful shutdown)
-├── .env.example
-└── tsconfig.json
-```
-
-Each module follows a clean separation of concerns:
-
-```
-module/
-├── module.schema.ts      # Zod validation schemas
-├── module.service.ts     # business logic
-├── module.controller.ts  # request handlers
-└── module.routes.ts      # Express router
-```
-
 ## Getting Started
 
 ### Prerequisites
@@ -126,28 +89,6 @@ module/
    ```
 
 The server runs on `http://localhost:3000`.
-
-## Environment Variables
-
-| Variable                        | Description                                          | Default            |
-| ------------------------------- | ---------------------------------------------------- | ------------------ |
-| `PORT`                          | HTTP port the server listens on                       | `3000`             |
-| `NODE_ENV`                      | `development`, `test`, or `production`                | `development`      |
-| `DATABASE_URL`                  | PostgreSQL connection string                          | — (required)       |
-| `JWT_SECRET`                    | Secret for signing access tokens                      | — (required)       |
-| `JWT_REFRESH_SECRET`            | Secret for signing refresh tokens                     | — (required)       |
-| `JWT_ACCESS_EXPIRES_IN`         | Access token lifetime                                 | `15m`              |
-| `JWT_REFRESH_EXPIRES_IN`        | Refresh token lifetime                                | `7d`               |
-| `RESEND_API_KEY`                | Resend API key (emails are skipped if empty)          | ``                 |
-| `EMAIL_FROM`                    | Sender address for outgoing emails                    | `Drop Me a Tip <…>` |
-| `FRONTEND_URL`                  | Frontend URL used in welcome links                    | `http://localhost:3000` |
-| `WEBHOOK_SECRET`                | Secret for the payments webhook                       | `dev-webhook-secret` |
-| `PLATFORM_FEE_PERCENT`          | Platform fee applied to each payment (%)              | `5`                |
-| `OTP_SECRET`                    | Pepper used to hash OTP codes                         | `dev-otp-secret`   |
-| `OTP_LENGTH`                    | Number of digits in the OTP                           | `6`                |
-| `OTP_EXPIRES_MINUTES`           | OTP validity window                                   | `10`               |
-| `OTP_MAX_ATTEMPTS`              | Max wrong attempts before the OTP is invalidated      | `5`                |
-| `OTP_RESEND_COOLDOWN_SECONDS`   | Cooldown before a new OTP can be requested            | `30`               |
 
 ## API Reference
 
