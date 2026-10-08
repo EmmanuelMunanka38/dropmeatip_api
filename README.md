@@ -1,21 +1,104 @@
 <p align="center">
-  <img src="public/images/Drop%20Me%20a%20Tip%20Script%20Logo.png" alt="Drop Me a Tip Logo" width="800" />
+  <img src="public/images/Drop%20Me%20a%20Tip%20in%20Blue%20Script.png" alt="Drop Me a Tip Logo" width="800" />
 </p>
 
-# dropmeatip_api
+<h1 align="center">Drop Me a Tip</h1>
 
-Production-grade monolithic REST API for a Tanzanian creator donation and membership platform (a Buy Me a Coffee clone). Supports passwordless OTP authentication, creator profiles and membership tiers, mobile-money donations, and a double-entry wallet with payouts.
+<p align="center">
+  A production-grade monolithic REST API for a Tanzanian creator donation and
+  membership platform — a <em>Buy Me a Coffee</em> clone built for mobile money.
+</p>
+
+---
+
+## Overview
+
+**Drop Me a Tip** lets creators (artists, musicians, bloggers, streamers) receive
+tips and monthly membership subscriptions from their supporters. Supporters pay
+via Tanzanian mobile money numbers (e.g. M-Pesa, Airtel Money, Tigo Pesa), and
+creators withdraw their earnings to the same numbers.
+
+The backend is a modular, type-safe Node.js/Express application with a
+passwordless (email OTP) authentication flow, a mock payment gateway that is
+ready to be swapped for real providers (Snippe, Azam Pay), and a double-entry
+wallet ledger for accurate, auditable balances.
+
+## Features
+
+- **Passwordless authentication** — register and log in with an email OTP
+  (no password). Access and refresh JWTs are issued after OTP verification.
+- **Creator profiles** — public profile page by handle (`@username`), with a
+  customizable "unit" (e.g. *Soda* for TZS 2,000) and monthly membership tiers.
+- **Mobile money payments** — donations and tier subscriptions are validated to
+  the Tanzanian `255XXXXXXXX` format and processed through a mock gateway.
+- **Double-entry wallet** — every credit, platform fee, and withdrawal is recorded
+  as a ledger entry, so the balance is always a verifiable sum.
+- **Automated payouts** — creators request withdrawals to mobile money with
+  atomic balance checks and pending-debit locking.
+- **Transactional emails** — welcome, OTP verification, donation received, and
+  payout status emails via Resend.
+- **Global error handling** — Zod, Prisma, and HTTP errors are normalized into a
+  consistent `{ success, message, data, errors }` JSON envelope.
+- **Strict TypeScript** — runtime validation with Zod and compile-time type safety.
 
 ## Tech Stack
 
-- **Runtime**: Node.js
-- **Framework**: Express.js (TypeScript)
-- **ORM**: Prisma (PostgreSQL)
-- **Validation**: Zod
-- **Authentication**: JWT (access + refresh) with email OTP (passwordless)
-- **Email**: Resend
+| Area           | Technology                          |
+| -------------- | ----------------------------------- |
+| Runtime        | Node.js                             |
+| Framework      | Express.js 5                        |
+| Language       | TypeScript                          |
+| ORM            | Prisma 7 (PostgreSQL + driver adapter) |
+| Database       | PostgreSQL                          |
+| Validation     | Zod                                 |
+| Authentication | JWT (access + refresh)              |
+| Email          | Resend                              |
+
+## Project Structure
+
+```
+.
+├── prisma/
+│   ├── schema.prisma          # User, Otp, MembershipTier, UserMembership,
+│   │                          # Transaction, Wallet, WalletLedger, Payout
+│   └── migrations/
+├── public/                    # Static assets (images served at /images/*)
+├── src/
+│   ├── config/                # env.ts (Zod), db.ts (Prisma singleton)
+│   ├── middleware/            # auth, validate, error
+│   ├── utils/                 # jwt, phone, api-response, http-error
+│   ├── services/              # email.service, otp.service
+│   ├── email-templates/       # welcome, otp, donation, payout
+│   ├── types/                 # shared types + Express augmentation
+│   ├── modules/
+│   │   ├── auth/              # register, login, verify-otp, refresh, me
+│   │   ├── creators/          # profile, tiers
+│   │   ├── payments/          # initiate, webhook, transaction status
+│   │   └── wallet/            # balance, ledger, withdraw
+│   ├── app.ts                 # Express app + middleware wiring
+│   └── server.ts              # entrypoint (port + graceful shutdown)
+├── .env.example
+└── tsconfig.json
+```
+
+Each module follows a clean separation of concerns:
+
+```
+module/
+├── module.schema.ts      # Zod validation schemas
+├── module.service.ts     # business logic
+├── module.controller.ts  # request handlers
+└── module.routes.ts      # Express router
+```
 
 ## Getting Started
+
+### Prerequisites
+
+- Node.js 20+
+- PostgreSQL (local or remote)
+
+### Installation
 
 1. Install dependencies:
 
@@ -29,14 +112,14 @@ Production-grade monolithic REST API for a Tanzanian creator donation and member
    cp .env.example .env
    ```
 
-3. Run migrations and generate the Prisma client:
+3. Create the database and run migrations:
 
    ```bash
    npx prisma migrate deploy
    npx prisma generate
    ```
 
-4. Start the server:
+4. Start the development server:
 
    ```bash
    npm run dev
@@ -44,20 +127,110 @@ Production-grade monolithic REST API for a Tanzanian creator donation and member
 
 The server runs on `http://localhost:3000`.
 
+## Environment Variables
+
+| Variable                        | Description                                          | Default            |
+| ------------------------------- | ---------------------------------------------------- | ------------------ |
+| `PORT`                          | HTTP port the server listens on                       | `3000`             |
+| `NODE_ENV`                      | `development`, `test`, or `production`                | `development`      |
+| `DATABASE_URL`                  | PostgreSQL connection string                          | — (required)       |
+| `JWT_SECRET`                    | Secret for signing access tokens                      | — (required)       |
+| `JWT_REFRESH_SECRET`            | Secret for signing refresh tokens                     | — (required)       |
+| `JWT_ACCESS_EXPIRES_IN`         | Access token lifetime                                 | `15m`              |
+| `JWT_REFRESH_EXPIRES_IN`        | Refresh token lifetime                                | `7d`               |
+| `RESEND_API_KEY`                | Resend API key (emails are skipped if empty)          | ``                 |
+| `EMAIL_FROM`                    | Sender address for outgoing emails                    | `Drop Me a Tip <…>` |
+| `FRONTEND_URL`                  | Frontend URL used in welcome links                    | `http://localhost:3000` |
+| `WEBHOOK_SECRET`                | Secret for the payments webhook                       | `dev-webhook-secret` |
+| `PLATFORM_FEE_PERCENT`          | Platform fee applied to each payment (%)              | `5`                |
+| `OTP_SECRET`                    | Pepper used to hash OTP codes                         | `dev-otp-secret`   |
+| `OTP_LENGTH`                    | Number of digits in the OTP                           | `6`                |
+| `OTP_EXPIRES_MINUTES`           | OTP validity window                                   | `10`               |
+| `OTP_MAX_ATTEMPTS`              | Max wrong attempts before the OTP is invalidated      | `5`                |
+| `OTP_RESEND_COOLDOWN_SECONDS`   | Cooldown before a new OTP can be requested            | `30`               |
+
+## API Reference
+
+All endpoints are prefixed with `/api/v1` and return the standard envelope:
+
+```json
+{ "success": true, "message": "…", "data": {} }
+```
+
+### Authentication (`/auth`)
+
+| Method | Endpoint               | Access    | Description                                        |
+| ------ | ---------------------- | --------- | -------------------------------------------------- |
+| POST   | `/auth/register`       | Public    | Register with name, email, phone → sends OTP       |
+| POST   | `/auth/login`          | Public    | Request a login OTP for an existing email          |
+| POST   | `/auth/verify-otp`     | Public    | Verify OTP → returns access + refresh tokens       |
+| POST   | `/auth/refresh-token`  | Public    | Exchange a refresh token for new tokens            |
+| POST   | `/auth/logout`         | Protected | Log out                                            |
+| GET    | `/auth/me`             | Protected | Get the authenticated user's profile               |
+
+### Creators (`/creators`)
+
+| Method | Endpoint                     | Access    | Description                                  |
+| ------ | ---------------------------- | --------- | -------------------------------------------- |
+| GET    | `/creators/:username`        | Public    | Public profile, unit settings, active tiers  |
+| PATCH  | `/creators/profile`          | Protected | Update bio, unit name, unit price, payout phone |
+| POST   | `/creators/tiers`            | Protected | Create a monthly membership tier             |
+| GET    | `/creators/tiers/my-tiers`   | Protected | List the authenticated creator's tiers       |
+| PATCH  | `/creators/tiers/:id`        | Protected | Update a tier                                |
+| DELETE | `/creators/tiers/:id`        | Protected | Delete a tier                                |
+
+### Payments (`/payments`)
+
+| Method | Endpoint                       | Access   | Description                                      |
+| ------ | ------------------------------ | -------- | ------------------------------------------------ |
+| POST   | `/payments/initiate`           | Public   | Start a donation or tier join (returns mock USSD) |
+| POST   | `/payments/webhook`            | Internal | Confirm a payment and credit the creator's wallet |
+| GET    | `/payments/transaction/:id`    | Public   | Poll transaction status                          |
+
+### Wallet (`/wallet`)
+
+| Method | Endpoint            | Access    | Description                                   |
+| ------ | ------------------- | --------- | --------------------------------------------- |
+| GET    | `/wallet/balance`   | Protected | Real-time net balance from the ledger         |
+| GET    | `/wallet/ledger`    | Protected | Paginated ledger history                      |
+| POST   | `/wallet/withdraw`  | Protected | Request a mobile-money payout                 |
+
+## How Payments Work
+
+1. A supporter calls `POST /payments/initiate` with a phone number and either a
+   donation amount or a membership tier. The phone is normalized to
+   `255XXXXXXXX` and a `PENDING` transaction is created.
+2. The gateway method `PaymentService.triggerMobileMoneyPush` returns a mock
+   USSD push response. To integrate a real provider (Snippe/Azam Pay), only this
+   single method needs to be replaced.
+3. The provider later confirms the payment by calling `POST /payments/webhook`
+   (protected by `WEBHOOK_SECRET`). The transaction is marked `COMPLETED` and the
+   creator's wallet is credited — **net of the platform fee** — within an atomic
+   database transaction.
+4. The creator is notified by email and can poll status via
+   `GET /payments/transaction/:id`.
+
+## Wallet Accounting
+
+The wallet uses a **double-entry ledger**. Every event writes an entry:
+
+| Entry type | Meaning                              | Effect on balance |
+| ---------- | ------------------------------------ | ----------------- |
+| `CREDIT`   | Gross amount received from a supporter | `+`            |
+| `FEE`      | Platform fee deducted                 | `−`            |
+| `DEBIT`    | Withdrawal / payout                   | `−`            |
+
+The balance is always computed as `SUM(CREDIT) − SUM(DEBIT) − SUM(FEE)`, never
+stored directly. Withdrawals run inside a `SERIALIZABLE` transaction to prevent
+spending the same funds twice.
+
 ## Scripts
 
-| Command                | Description                              |
-| ---------------------- | ---------------------------------------- |
-| `npm run dev`          | Start dev server with hot reload         |
-| `npm run build`        | Compile TypeScript to `dist/`            |
-| `npm start`            | Run the compiled server                  |
-| `npm run typecheck`    | Type-check without emitting              |
-| `npm run prisma:generate` | Regenerate the Prisma client           |
-| `npm run prisma:migrate`  | Create/apply a dev migration           |
-
-## API Modules
-
-- `/api/v1/auth` — register, login (OTP), verify-otp, refresh-token, me
-- `/api/v1/creators` — public profile, profile update, membership tiers
-- `/api/v1/payments` — initiate donation/membership, webhook, transaction status
-- `/api/v1/wallet` — balance, ledger, withdraw
+| Command                    | Description                              |
+| -------------------------- | ---------------------------------------- |
+| `npm run dev`              | Start dev server with hot reload         |
+| `npm run build`            | Compile TypeScript to `dist/`            |
+| `npm start`                | Run the compiled server                  |
+| `npm run typecheck`        | Type-check without emitting              |
+| `npm run prisma:generate`  | Regenerate the Prisma client             |
+| `npm run prisma:migrate`   | Create/apply a development migration     |
