@@ -1,3 +1,4 @@
+import path from "node:path";
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
@@ -20,6 +21,9 @@ app.use(express.urlencoded({ extended: true }));
 if (env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
+
+const publicDir = path.resolve(process.cwd(), "public");
+app.use(express.static(publicDir));
 
 app.get("/health", (_req, res) => {
   res.status(200).json({

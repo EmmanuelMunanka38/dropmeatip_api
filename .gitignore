@@ -39,3 +39,7 @@ coverage
 .windsurf/
 .agents/
 skills-lock.json
+
+# Runtime-uploaded assets (keep the folder, ignore its contents)
+public/uploads/*
+!public/uploads/.gitkeep
