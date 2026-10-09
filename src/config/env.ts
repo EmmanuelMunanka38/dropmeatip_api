@@ -14,6 +14,7 @@ const envSchema = z.object({
   RESEND_API_KEY: z.string().optional().default(""),
   EMAIL_FROM: z.string().default("Drop Me a Tip <onboarding@resend.dev>"),
   FRONTEND_URL: z.string().url().default("http://localhost:3000"),
+  BACKEND_URL: z.string().url().default("http://localhost:3000"),
   WEBHOOK_SECRET: z.string().default("dev-webhook-secret"),
   PLATFORM_FEE_PERCENT: z.coerce.number().min(0).max(100).default(5),
   OTP_SECRET: z.string().default("dev-otp-secret"),

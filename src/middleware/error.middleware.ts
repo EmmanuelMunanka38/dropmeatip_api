@@ -34,11 +34,13 @@ export const errorHandler = (
 ): void => {
   let statusCode = 500;
   let message = "Internal Server Error";
+  let type = "Error";
   let errors: unknown;
 
   if (err instanceof ZodError) {
     statusCode = 400;
     message = "Validation failed";
+    type = "ValidationError";
     errors = err.issues.map((issue) => ({
       field: issue.path.join(".") || "(root)",
       message: issue.message,
@@ -46,18 +48,23 @@ export const errorHandler = (
   } else if (err instanceof HttpError) {
     statusCode = err.statusCode;
     message = err.message;
+    type = "HttpError";
   } else if (err instanceof Prisma.PrismaClientKnownRequestError) {
     const mapped = mapPrismaError(err);
     statusCode = mapped.statusCode;
     message = mapped.message;
+    type = "DbError";
   } else if (err instanceof Prisma.PrismaClientInitializationError) {
     message = "Database connection error";
+    type = "DbError";
   } else if (err instanceof Prisma.PrismaClientValidationError) {
     statusCode = 400;
     message = "Invalid data provided";
+    type = "DbError";
   } else if (err instanceof SyntaxError && "body" in err) {
     statusCode = 400;
     message = "Invalid JSON payload";
+    type = "SyntaxError";
   } else if (err instanceof Error) {
     message = err.message;
   }
@@ -66,8 +73,5 @@ export const errorHandler = (
     console.error("Unhandled error:", err);
   }
 
-  const stack =
-    env.NODE_ENV === "development" && err instanceof Error ? err.stack : undefined;
-
-  res.status(statusCode).json(errorResponse(message, errors, stack));
+  res.status(statusCode).json(errorResponse(message, type, errors));
 };
