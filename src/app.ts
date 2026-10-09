@@ -1,4 +1,3 @@
-import path from "node:path";
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
@@ -22,8 +21,12 @@ if (env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
 
-const publicDir = path.resolve(process.cwd(), "public");
-app.use(express.static(publicDir));
+app.get("/", (_req, res) => {
+  res.status(200).json({
+    success: true,
+    data: { message: "Drop Me a Tip API is up and running" },
+  });
+});
 
 app.get("/health", (_req, res) => {
   res.status(200).json({

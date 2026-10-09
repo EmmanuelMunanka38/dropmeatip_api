@@ -108,7 +108,7 @@ const generateUniqueUsername = async (fullName: string): Promise<string> => {
 
   return username;
 };
-
+ 
 export const register = async (
   input: RegisterInput,
 ): Promise<{ userId: string }> => {
