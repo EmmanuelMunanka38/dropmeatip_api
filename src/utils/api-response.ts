@@ -7,8 +7,8 @@ export interface ApiSuccessResponse<T> {
 export interface ApiErrorResponse {
   success: false;
   message: string;
+  type?: string;
   errors?: unknown;
-  stack?: string;
 }
 
 export const successResponse = <T>(
@@ -22,11 +22,11 @@ export const successResponse = <T>(
 
 export const errorResponse = (
   message: string,
+  type?: string,
   errors?: unknown,
-  stack?: string,
 ): ApiErrorResponse => ({
   success: false,
   message,
+  ...(type !== undefined ? { type } : {}),
   ...(errors !== undefined ? { errors } : {}),
-  ...(stack !== undefined ? { stack } : {}),
 });
